@@ -1,0 +1,13 @@
+{
+	"editor.formatOnPaste": true,
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"source.organizeImports": true
+	},
+	"python.formatting.provider": "yapf",
+	"python.linting.lintOnSave": true,
+	"python.linting.enabled": true,
+	"python.linting.pylintPath": "pylint",
+	"python.linting.pylintEnabled": true,
+	"python.sortImports.path": "${workspaceFolder}/.venv/bin/isort"
+}
