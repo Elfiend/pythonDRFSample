@@ -1,5 +1,5 @@
 """
-Usage : 
+Usage :
 - Test all
 python3 manage.py test
 - Test one class
@@ -7,12 +7,16 @@ python3 manage.py test login.tests.LoginUserTest
 - Test only one method
 python3 manage.py test login.tests.RegisterUserTest.test_register_with_wrong
 """
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
 from .models import LocalUser
+from .tokens import account_activation_token
 
 
 class BaseAPITestCase(APITestCase):
@@ -23,6 +27,9 @@ class BaseAPITestCase(APITestCase):
 
         self.test_user = LocalUser.objects.create_user(self.email,
                                                        self.password)
+        self.test_user.email_confirmed = False
+        self.test_user.is_social_auth = False
+        self.test_user.save()
 
 
 class AuthAPITestCase(BaseAPITestCase):
@@ -198,3 +205,42 @@ class LogoutUserTest(AuthAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # TODO: To check the token exist or not.
+
+
+class EmailVerificationTest(AuthAPITestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.resend_verification_email_url = reverse(
+            'auth-resend-verification-email')
+
+    def test_resend_verification_email_success(self):
+        """
+        Ensure user can ask for resend email to verify.
+        """
+        response = self.client.post(self.resend_verification_email_url,
+                                    '',
+                                    format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_verification_email_success(self):
+        """
+        Ensure user can verify for correct data.
+        """
+        response = self.client.post(self.resend_verification_email_url,
+                                    '',
+                                    format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        uid = urlsafe_base64_encode(force_bytes(self.test_user.pk))
+        token = account_activation_token.make_token(self.test_user)
+        email_verification_url = reverse('auth-email-verification',
+                                         args=(uid, token))
+
+        response = self.client.get(email_verification_url, '', format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['email'], self.email)
+        self.assertEqual(response.data['email_confirmed'], True)
