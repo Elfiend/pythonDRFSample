@@ -1,4 +1,4 @@
-from django.contrib.auth import logout
+from django.contrib.auth import login, logout
 from django.core.exceptions import ImproperlyConfigured
 
 from rest_framework import generics, permissions, status, viewsets
@@ -12,7 +12,8 @@ from .permissions import IsEmailConfirmed
 from .serializers import (AuthUserSerializer, EmptySerializer,
                           PasswordChangeSerializer, UserListSerializer,
                           UserLoginSerializer, UserRegisterSerializer)
-from .utils import create_user_account, get_and_authenticate_user
+from .utils import (activate_account, create_user_account,
+                    get_and_authenticate_user, send_verification_email)
 
 
 class AuthViewSet(viewsets.GenericViewSet):
@@ -37,6 +38,8 @@ class AuthViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = create_user_account(**serializer.validated_data)
+        # Send email
+        send_verification_email(request, user)
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_201_CREATED)
 
@@ -76,6 +79,34 @@ class AuthViewSet(viewsets.GenericViewSet):
         request.user.set_password(serializer.validated_data['new_password'])
         request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['POST'],
+            detail=False,
+            permission_classes=[
+                IsAuthenticated,
+            ])
+    def resend_verification_email(self, request):
+        user = request.user
+        send_verification_email(request, user)
+        data = {'success': 'Please Confirm your email to complete registration'}
+        return Response(data=data, status=status.HTTP_200_OK)
+
+    @action(
+        methods=['GET'],
+        detail=False,
+        name='email-verification',
+        url_path=
+        r'email_verification/(?P<uidb64>[-a-zA-Z0-9_]+)/(?P<token>[-a-zA-Z0-9_]+)/'
+    )
+    def email_verification(self, request, uidb64, token):
+        success, user = activate_account(uidb64, token)
+        if success is False:
+            data = {'error': 'The confirmation link was invalid.'}
+            return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+        login(request, user)
+        data = AuthUserSerializer(user).data
+        data['success'] = 'Your account have been confirmed.'
+        return Response(data=data, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):
         if not isinstance(self.serializer_classes, dict):
