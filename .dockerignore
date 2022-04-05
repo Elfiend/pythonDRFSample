@@ -1,0 +1,8 @@
+#Ignoring git and cache folders
+.git
+
+#Ignoring all the markdown files
+*.md
+
+#Ignoring the secret file
+.env
