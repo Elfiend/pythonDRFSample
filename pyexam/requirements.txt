@@ -18,6 +18,7 @@ Markdown==3.3.6
 mccabe==0.7.0
 oauthlib==3.2.0
 platformdirs==2.5.1
+psycopg2-binary==2.9.3
 pyasn1==0.4.8
 pycparser==2.21
 PyJWT==2.3.0
