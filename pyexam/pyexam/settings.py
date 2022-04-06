@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'social_django',
     'rest_social_auth',
     'corsheaders',
+    'drf_yasg',
     # Custom app
     'login',
 ]
@@ -171,6 +172,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -187,3 +189,28 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'elfiend+sendgrid@gmail.com'
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Email/Password': {
+            'type': 'basic'
+        },
+        'Auth0 with google/facebook': {
+            'type': 'oauth2',
+            'authorizationUrl': f'https://{SOCIAL_AUTH_AUTH0_DOMAIN}/authorize',
+            'tokenUrl': f'https://{SOCIAL_AUTH_AUTH0_DOMAIN}/oauth/token',
+            'flow': 'accessCode',
+            'scopes': {
+                'openid': 'openid',
+                'profile': 'User profile',
+                'email': 'Email',
+            },
+        },
+    },
+    'OAUTH2_CONFIG': {
+        'clientId': SOCIAL_AUTH_AUTH0_KEY,
+        'clientSecret': SOCIAL_AUTH_AUTH0_SECRET,
+        'appName': SOCIAL_AUTH_AUTH0_DOMAIN,
+    },
+}
