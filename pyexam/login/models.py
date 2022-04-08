@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 
@@ -67,3 +69,12 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL,
                                 on_delete=models.CASCADE)
     social_name = models.CharField(_('Social name'), max_length=150, blank=True)
+
+
+@receiver(post_save, sender=LocalUser)
+def update_profile(sender, instance, created, **kwargs):
+    del sender, kwargs
+
+    if created:
+        Profile.objects.create(user=instance)
+    instance.profile.save()

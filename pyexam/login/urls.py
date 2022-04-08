@@ -1,9 +1,20 @@
 """
 Url List:
-- api/auth/login
-- api/auth/logout
-- api/auth/password_change
-- api/auth/register
+^swagger(?P<format>.json|.yaml)$ [name='schema-json']
+^swagger/$ [name='schema-swagger-ui']
+^redoc/$ [name='schema-redoc']
+users/ [name='user-list']
+users/<int:pk>/ [name='user-detail']
+api/login/social/session
+^api/auth$ [name='auth-list']
+^api/auth/email_verification/<uidb64>/<token>/$ [name='auth-email-verification']
+^api/auth/login$ [name='auth-login']
+^api/auth/logout$ [name='auth-logout']
+^api/auth/resend_verification_email$ [name='auth-resend-verification-email']
+^api/auth/reset_password$ [name='auth-reset-password']
+^api/auth/signup$ [name='auth-signup']
+^api/auth/update_profile$ [name='auth-update-profile']
+^$ [name='api-root']
 """
 from django.urls import include, path
 

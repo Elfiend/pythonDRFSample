@@ -1,6 +1,11 @@
+import json
+from urllib.parse import urlencode
+
+from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core.exceptions import ImproperlyConfigured
 
+import requests
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -10,10 +15,12 @@ from rest_framework.reverse import reverse
 from .models import LocalUser
 from .permissions import IsEmailConfirmed
 from .serializers import (AuthUserSerializer, EmptySerializer,
-                          PasswordChangeSerializer, UserListSerializer,
-                          UserLoginSerializer, UserRegisterSerializer)
+                          ResetPasswordSerializer, UpdateProfileSerializer,
+                          UserListSerializer, UserLoginSerializer,
+                          UserSignupSerializer)
 from .utils import (activate_account, create_user_account,
-                    get_and_authenticate_user, send_verification_email)
+                    get_and_authenticate_user, send_verification_email,
+                    update_name)
 
 
 class AuthViewSet(viewsets.GenericViewSet):
@@ -25,16 +32,17 @@ class AuthViewSet(viewsets.GenericViewSet):
     ]
     serializer_class = EmptySerializer
     serializer_classes = {
+        'signup': UserSignupSerializer,
         'login': UserLoginSerializer,
-        'register': UserRegisterSerializer,
-        'password_change': PasswordChangeSerializer,
+        'reset_password': ResetPasswordSerializer,
+        'update_profile': UpdateProfileSerializer,
     }
     queryset = ''
 
     @action(methods=[
         'POST',
     ], detail=False)
-    def register(self, request):
+    def signup(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = create_user_account(**serializer.validated_data)
@@ -60,9 +68,24 @@ class AuthViewSet(viewsets.GenericViewSet):
     ], detail=False)
     def logout(self, request):
         try:
-            request.user.auth_token.delete()
-        except (AttributeError):
-            pass
+            user = request.user
+            user.auth_token.delete()
+            # request.session.clear()
+
+            # https://auth0.com/docs/quickstart/webapp/django
+            if user.is_social_auth is True:
+                domain = settings.SOCIAL_AUTH_AUTH0_DOMAIN
+                data = urlencode({
+                    'returnTo': request.build_absolute_uri('/'),
+                    'client_id': settings.SOCIAL_AUTH_AUTH0_KEY
+                })
+                logout_url = f'https://{domain}/v2/logout?{data}'
+                response = requests.get(logout_url)
+                json_response = json.loads(response.text)
+                print(json_response)
+        except AttributeError:
+            data = {'error': ''}
+            return Response(data=data, status=status.HTTP_200_OK)
 
         logout(request)
         data = {'success': 'Sucessfully logged out'}
@@ -73,7 +96,7 @@ class AuthViewSet(viewsets.GenericViewSet):
             permission_classes=[
                 IsAuthenticated,
             ])
-    def password_change(self, request):
+    def reset_password(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         request.user.set_password(serializer.validated_data['new_password'])
@@ -91,13 +114,12 @@ class AuthViewSet(viewsets.GenericViewSet):
         data = {'success': 'Please Confirm your email to complete registration'}
         return Response(data=data, status=status.HTTP_200_OK)
 
-    @action(
-        methods=['GET'],
-        detail=False,
-        name='email-verification',
-        url_path=
-        r'email_verification/(?P<uidb64>[-a-zA-Z0-9_]+)/(?P<token>[-a-zA-Z0-9_]+)/'
-    )
+    @action(methods=['GET'],
+            detail=False,
+            name='email-verification',
+            url_path='email_verification/'
+            r'(?P<uidb64>[-a-zA-Z0-9_]+)/'
+            r'(?P<token>[-a-zA-Z0-9_]+)/')
     def email_verification(self, request, uidb64, token):
         success, user = activate_account(uidb64, token)
         if success is False:
@@ -106,6 +128,23 @@ class AuthViewSet(viewsets.GenericViewSet):
         login(request, user)
         data = AuthUserSerializer(user).data
         data['success'] = 'Your account have been confirmed.'
+        return Response(data=data, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'],
+            detail=False,
+            permission_classes=[
+                IsAuthenticated,
+            ])
+    def update_profile(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        success = update_name(request.user, **serializer.validated_data)
+        if success is False:
+            data = {'error': 'Update social name failed.'}
+            return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+        data = AuthUserSerializer(request.user).data
+        data['success'] = 'Your name updated.'
         return Response(data=data, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):
@@ -119,9 +158,9 @@ class AuthViewSet(viewsets.GenericViewSet):
 
     def list(self, request):
         return Response({
-            'register': reverse('auth-register', request=request),
+            'signup': reverse('auth-signup', request=request),
             'login': reverse('auth-login', request=request),
-            'password_change': reverse('auth-password-change', request=request),
+            'reset_password': reverse('auth-reset_password', request=request),
             'logout': reverse('auth-logout', request=request),
         })
 

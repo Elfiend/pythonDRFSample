@@ -25,12 +25,22 @@ def update_social_name(backend, user, response, *args, **kwargs):
 
     if not user:
         return
-    profile = user.profile
-    if profile is None:
-        profile = Profile(user_id=user.id)
+    profile, _ = Profile.objects.get_or_create(user_id=user.id)
     if not profile.social_name:
         profile.social_name = kwargs.get('details').get('fullname')
         profile.save()
+
+
+def update_name(user, social_name):
+    if not user:
+        return None
+    Profile.objects.update_or_create(
+        user_id=user.id,
+        defaults={'social_name': social_name},
+    )
+    # profile.social_name = social_name
+    # profile.save()
+    return user
 
 
 def create_user_account(email, password):
