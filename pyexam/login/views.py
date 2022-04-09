@@ -4,9 +4,12 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core.exceptions import ImproperlyConfigured
+from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 import requests
 from rest_framework import generics, permissions, status, viewsets
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -27,9 +30,9 @@ class AuthViewSet(viewsets.GenericViewSet):
     """
     A set of the view used for authenticate.
     """
-    permission_classes = [
-        AllowAny,
-    ]
+    permission_classes = (AllowAny,)
+    authentication_classes = (SessionAuthentication,)
+
     serializer_class = EmptySerializer
     serializer_classes = {
         'signup': UserSignupSerializer,
@@ -69,9 +72,6 @@ class AuthViewSet(viewsets.GenericViewSet):
     def logout(self, request):
         try:
             user = request.user
-            user.auth_token.delete()
-            # request.session.clear()
-
             # https://auth0.com/docs/quickstart/webapp/django
             if user.is_social_auth is True:
                 domain = settings.SOCIAL_AUTH_AUTH0_DOMAIN
@@ -160,7 +160,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         return Response({
             'signup': reverse('auth-signup', request=request),
             'login': reverse('auth-login', request=request),
-            'reset_password': reverse('auth-reset_password', request=request),
+            'reset_password': reverse('auth-reset-password', request=request),
             'logout': reverse('auth-logout', request=request),
         })
 
@@ -169,3 +169,13 @@ class UserList(generics.ListAPIView):
     queryset = LocalUser.objects.all()
     serializer_class = UserListSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+
+@ensure_csrf_cookie
+def set_csrf_cookie(request):
+    """
+    This will be `/api/auth/set-csrf-cookie/` on `urls.py`
+    """
+    del request
+    data = {'details': 'CSRF cookie set'}
+    return JsonResponse(data)

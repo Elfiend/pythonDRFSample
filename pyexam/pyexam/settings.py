@@ -170,8 +170,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication'
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -190,7 +189,7 @@ EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'elfiend+sendgrid@gmail.com'
 
 SWAGGER_SETTINGS = {
-    'USE_SESSION_AUTH': False,
+    'USE_SESSION_AUTH': True,
     'SECURITY_DEFINITIONS': {
         'Email/Password': {
             'type': 'basic'
@@ -207,6 +206,8 @@ SWAGGER_SETTINGS = {
             },
         },
     },
+    'LOGIN_URL': '/api-auth/login',
+    'LOGOUT_URL': '/api-auth/logout',
     'OAUTH2_CONFIG': {
         'clientId': SOCIAL_AUTH_AUTH0_KEY,
         'clientSecret': SOCIAL_AUTH_AUTH0_SECRET,

@@ -1,7 +1,6 @@
 from django.contrib.auth import password_validation
 
 from rest_framework import serializers
-from rest_framework.authtoken.models import Token
 
 from .models import LocalUser, LocalUserManager, Profile
 
@@ -54,7 +53,6 @@ class AuthUserSerializer(serializers.ModelSerializer):
     """
     A user serializer for auth the user.
     """
-    auth_token = serializers.SerializerMethodField()
     social_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -65,18 +63,12 @@ class AuthUserSerializer(serializers.ModelSerializer):
             'email_confirmed',
             'is_social_auth',
             'social_name',
-            'auth_token',
         )
         read_only_fields = (
             'id',
             'email',
             'is_social_auth',
-            'auth_token',
         )
-
-    def get_auth_token(self, obj):
-        token, _ = Token.objects.get_or_create(user=obj)
-        return token.key
 
     def get_social_name(self, obj):
         profile = Profile.objects.get(user_id=obj.id)

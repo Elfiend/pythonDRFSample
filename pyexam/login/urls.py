@@ -27,6 +27,7 @@ router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'api/auth', AuthViewSet, basename='auth')
 
 urlpatterns = [
+    path('api/login/set-csrf', views.set_csrf_cookie, name='auth-login-csrf'),
     path('api/users/', UserList.as_view(), name='user-list'),
     path('', router.get_api_root_view()),
     path('api/login/', include('rest_social_auth.urls_session')),
