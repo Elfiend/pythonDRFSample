@@ -24,7 +24,7 @@ SchemaView = get_schema_view(
     openapi.Info(
         title='Django Restful framework API',
         default_version='v1',
-        description='Test description',
+        description='Source code : https://github.com/Elfiend/pythonSample',
         terms_of_service='https://www.google.com/policies/terms/',
         contact=openapi.Contact(email='elfiend+drf@gmail.com'),
         license=openapi.License(name='BSD License'),

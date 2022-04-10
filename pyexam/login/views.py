@@ -8,6 +8,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 import requests
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
@@ -42,10 +44,27 @@ class AuthViewSet(viewsets.GenericViewSet):
     }
     queryset = ''
 
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_201_CREATED:
+                openapi.Response(
+                    description='Sign up successful and return user detail.',
+                    schema=AuthUserSerializer,
+                    examples=AuthUserSerializer.to_string_response_examples(),
+                ),
+            status.HTTP_400_BAD_REQUEST:
+                openapi.Response(
+                    description='Sign up failed with error message.',
+                    examples=UserSignupSerializer.to_string_response_examples()
+                ),
+        })
     @action(methods=[
         'POST',
     ], detail=False)
     def signup(self, request):
+        """
+        Sign up with email and password.
+        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = create_user_account(**serializer.validated_data)
@@ -54,10 +73,27 @@ class AuthViewSet(viewsets.GenericViewSet):
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_200_OK:
+                openapi.Response(
+                    description='Login successful and return user detail.',
+                    schema=AuthUserSerializer,
+                    examples=AuthUserSerializer.to_string_response_examples(),
+                ),
+            status.HTTP_400_BAD_REQUEST:
+                openapi.Response(
+                    description='Login failed with error message.',
+                    examples=UserLoginSerializer.to_string_response_examples(),
+                ),
+        })
     @action(methods=[
         'POST',
     ], detail=False)
     def login(self, request):
+        """
+        Log in with email and password.
+        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = get_and_authenticate_user(**serializer.validated_data)
@@ -66,10 +102,19 @@ class AuthViewSet(viewsets.GenericViewSet):
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_204_NO_CONTENT:
+                openapi.Response(description='Log out successful.',
+                                 schema=EmptySerializer)
+        })
     @action(methods=[
         'POST',
     ], detail=False)
     def logout(self, request):
+        """
+        Log out the user by both email and social account.
+        """
         try:
             user = request.user
             # https://auth0.com/docs/quickstart/webapp/django
@@ -84,58 +129,134 @@ class AuthViewSet(viewsets.GenericViewSet):
                 json_response = json.loads(response.text)
                 print(json_response)
         except AttributeError:
-            data = {'error': ''}
-            return Response(data=data, status=status.HTTP_200_OK)
+            # Log out error but need not tell client.
+            # Just do log with error detail.
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         logout(request)
-        data = {'success': 'Sucessfully logged out'}
-        return Response(data=data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['POST'],
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_204_NO_CONTENT:
+                openapi.Response(
+                    description='Reset password successful.',
+                    schema=EmptySerializer,
+                ),
+            status.HTTP_400_BAD_REQUEST:
+                openapi.Response(
+                    description='Reset password failed with error message.',
+                    examples=ResetPasswordSerializer.
+                    to_string_response_examples())
+        })
+    @action(methods=[
+        'POST',
+    ],
             detail=False,
             permission_classes=[
                 IsAuthenticated,
             ])
     def reset_password(self, request):
+        """
+        Reset password with new password directly.
+        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         request.user.set_password(serializer.validated_data['new_password'])
         request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['POST'],
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_204_NO_CONTENT:
+                openapi.Response(
+                    description='Send email successful.',
+                    schema=EmptySerializer,
+                ),
+        })
+    @action(methods=[
+        'POST',
+    ],
             detail=False,
             permission_classes=[
                 IsAuthenticated,
             ])
     def resend_verification_email(self, request):
+        """
+        Send verification email again.
+        """
         user = request.user
         send_verification_email(request, user)
-        data = {'success': 'Please Confirm your email to complete registration'}
-        return Response(data=data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['GET'],
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_204_NO_CONTENT:
+                openapi.Response(
+                    description='Verify email successful and log in user.',
+                    schema=AuthUserSerializer,
+                    examples=AuthUserSerializer.to_string_response_examples(),
+                ),
+            status.HTTP_400_BAD_REQUEST:
+                openapi.Response(
+                    description='Verify email failed with error message.',
+                    examples={
+                        'application/json': {
+                            'error': 'The confirmation link was invalid.'
+                        }
+                    })
+        })
+    @action(methods=[
+        'GET',
+    ],
             detail=False,
             name='email-verification',
             url_path='email_verification/'
             r'(?P<uidb64>[-a-zA-Z0-9_]+)/'
             r'(?P<token>[-a-zA-Z0-9_]+)/')
     def email_verification(self, request, uidb64, token):
+        """
+        Verify the user from email link.
+        """
         success, user = activate_account(uidb64, token)
         if success is False:
             data = {'error': 'The confirmation link was invalid.'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         login(request, user)
         data = AuthUserSerializer(user).data
-        data['success'] = 'Your account have been confirmed.'
         return Response(data=data, status=status.HTTP_200_OK)
 
-    @action(methods=['POST'],
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_200_OK:
+                openapi.Response(
+                    description='Update successful and return user detail.',
+                    schema=AuthUserSerializer,
+                    examples=AuthUserSerializer.to_string_response_examples(),
+                ),
+            status.HTTP_400_BAD_REQUEST:
+                openapi.Response(
+                    description='Login failed with error message.',
+                    examples={
+                        'application/json': {
+                            'error': 'Update social name failed.'
+                        }
+                    },
+                ),
+        })
+    @action(methods=[
+        'POST',
+    ],
             detail=False,
             permission_classes=[
                 IsAuthenticated,
             ])
     def update_profile(self, request):
+        """
+        Update the name.
+        The default name is empty string if user sign up with email.
+        Otherwise, the default name is from the social account.
+        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -144,7 +265,6 @@ class AuthViewSet(viewsets.GenericViewSet):
             data = {'error': 'Update social name failed.'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         data = AuthUserSerializer(request.user).data
-        data['success'] = 'Your name updated.'
         return Response(data=data, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):

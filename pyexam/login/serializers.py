@@ -40,6 +40,21 @@ class UserSignupSerializer(serializers.ModelSerializer):
         attrs.pop('password2')
         return attrs
 
+    @staticmethod
+    def to_string_response_examples():
+        return {
+            'application/json': {
+                'email': ['Email is already taken'],
+                'password': [
+                    'This password is too short. It must contain at least 8 characters.',
+                    'The password must contain at least 1 digit, 0-9.',
+                    'The password must contain at least 1 uppercase letter, A-Z.',
+                    'The password must contain at least 1 lowercase letter, a-z.'
+                ],
+                'password2': ['The two password fields did not match.',]
+            }
+        }
+
 
 class UserLoginSerializer(serializers.Serializer):
     """
@@ -47,6 +62,14 @@ class UserLoginSerializer(serializers.Serializer):
     """
     email = serializers.CharField(max_length=300, required=True)
     password = serializers.CharField(required=True, write_only=True)
+
+    @staticmethod
+    def to_string_response_examples():
+        return {
+            'application/json': [
+                'Invalid username/password. Please try again!'
+            ],
+        }
 
 
 class AuthUserSerializer(serializers.ModelSerializer):
@@ -76,6 +99,18 @@ class AuthUserSerializer(serializers.ModelSerializer):
             return profile.social_name
         return ''
 
+    @staticmethod
+    def to_string_response_examples():
+        return {
+            'application/json': {
+                'id': 100,
+                'email': 'user@email',
+                'email_confirmed': False,
+                'is_social_auth': False,
+                'social_name': 'Name for social.',
+            }
+        }
+
 
 class ResetPasswordSerializer(serializers.Serializer):
     """
@@ -102,6 +137,24 @@ class ResetPasswordSerializer(serializers.Serializer):
         # Drop the unnecessary key for creating.
         attrs.pop('reenter_new_password')
         return attrs
+
+    @staticmethod
+    def to_string_response_examples():
+        return {
+            'application/json': {
+                'old_password': ['Old password does not match',],
+                'new_password': [
+                    'This password is too short. It must contain at least 8 characters.',
+                    'The password must contain at least 1 digit, 0-9.',
+                    'The password must contain at least 1 uppercase letter, A-Z.',
+                    'The password must contain at least 1 lowercase letter, a-z.',
+                    'The password must contain at least 1 symbol',
+                ],
+                'reenter_new_password': [
+                    'The two password fields did not match.',
+                ]
+            }
+        }
 
 
 class UpdateProfileSerializer(serializers.Serializer):

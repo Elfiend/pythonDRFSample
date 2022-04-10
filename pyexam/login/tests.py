@@ -228,9 +228,7 @@ class LogoutUserTest(AuthAPITestCase):
         Ensure user can log out for correct data.
         """
         response = self.client.post(self.logout_url, '', format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        # TODO: To check the token exist or not.
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
 
 class EmailVerificationTest(AuthAPITestCase):
@@ -248,7 +246,7 @@ class EmailVerificationTest(AuthAPITestCase):
                                     '',
                                     format='json')
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         # Test that one message has been sent.
         self.assertEqual(len(mail.outbox), 1)
         # Verify that the subject of the first message is correct.
@@ -262,7 +260,7 @@ class EmailVerificationTest(AuthAPITestCase):
                                     '',
                                     format='json')
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         uid = urlsafe_base64_encode(force_bytes(self.test_user.pk))
         token = account_activation_token.make_token(self.test_user)
