@@ -170,6 +170,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication'
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -191,8 +192,10 @@ DEFAULT_FROM_EMAIL = 'elfiend+sendgrid@gmail.com'
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': True,
     'SECURITY_DEFINITIONS': {
-        'Email/Password': {
-            'type': 'basic'
+        'DRF Token': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
         },
         'Auth0 with google/facebook': {
             'type': 'oauth2',

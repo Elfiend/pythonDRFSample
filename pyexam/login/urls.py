@@ -5,7 +5,7 @@ Url List:
 ^redoc/$ [name='schema-redoc']
 users/ [name='user-list']
 users/<int:pk>/ [name='user-detail']
-api/login/social/session
+api/login/social/token
 ^api/auth$ [name='auth-list']
 ^api/auth/email_verification/<uidb64>/<token>/$ [name='auth-email-verification']
 ^api/auth/login$ [name='auth-login']
@@ -27,10 +27,9 @@ router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'api/auth', AuthViewSet, basename='auth')
 
 urlpatterns = [
-    path('api/login/set-csrf', views.set_csrf_cookie, name='auth-login-csrf'),
     path('api/users/', UserList.as_view(), name='user-list'),
     path('', router.get_api_root_view()),
-    path('api/login/', include('rest_social_auth.urls_session')),
+    path('api/login/', include('rest_social_auth.urls_token')),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

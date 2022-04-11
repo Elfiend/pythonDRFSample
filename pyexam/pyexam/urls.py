@@ -20,11 +20,21 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
+detail_description = """
+Source code : https://github.com/Elfiend/pythonDRFSample
+Login Way:
+    1. Use session(Django Login button) with username and password. 
+    2. Use token(Authorize button) 
+        a. Login with api, and get the result token.
+        b. Press the button and fill the token value with prefix "Token " 
+        Examples: token is 123456, Enter the value "Token 123456"
+"""
+
 SchemaView = get_schema_view(
     openapi.Info(
         title='Django Restful framework API',
         default_version='v1',
-        description='Source code : https://github.com/Elfiend/pythonSample',
+        description=detail_description,
         terms_of_service='https://www.google.com/policies/terms/',
         contact=openapi.Contact(email='elfiend+drf@gmail.com'),
         license=openapi.License(name='BSD License'),

@@ -15,6 +15,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
@@ -43,7 +44,12 @@ class AuthAPITestCase(BaseAPITestCase):
     def setUp(self):
         super().setUp()
 
-        self.client.login(email=self.email, password=self.password)
+        # self.client.login(email=self.email, password=self.password)
+        self.login_url = reverse('auth-login')
+        data = {'email': self.email, 'password': self.password}
+        response = self.client.post(self.login_url, data, format='json')
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' +
+                                response.data['auth_token'])
 
 
 class SignupUserTest(BaseAPITestCase):
@@ -72,6 +78,10 @@ class SignupUserTest(BaseAPITestCase):
         # Additionally, we want to return email upon successful creation.
         self.assertEqual(response.data['email'], data['email'])
         self.assertFalse('password' in response.data)
+
+        user = LocalUser.objects.latest('id')
+        token = Token.objects.get(user=user)
+        self.assertEqual(response.data['auth_token'], token.key)
 
     def test_signup_with_exist_email(self):
         """
@@ -193,6 +203,10 @@ class LoginUserTest(BaseAPITestCase):
         response = self.client.post(self.login_url, data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        user = LocalUser.objects.latest('id')
+        token = Token.objects.get(user=user)
+        self.assertEqual(response.data['auth_token'], token.key)
 
 
 class ResetPasswordTest(AuthAPITestCase):
