@@ -1,8 +1,8 @@
 """
 An authentication function set.
 """
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
-from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -66,16 +66,16 @@ def get_and_authenticate_user(email, password):
     return user
 
 
-def send_verification_email(request, user):
+def send_verification_email(user):
     """
     Used to send email with verification information.
     """
-    current_site = get_current_site(request)
+    current_site = f'{settings.FRONTEND_URL}:{settings.FRONTEND_PORT}'
     subject = 'Activate Your Account'
     message = render_to_string(
         'email/account_activation.html', {
             'user': user,
-            'domain': current_site.domain,
+            'domain': current_site,
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': account_activation_token.make_token(user),
         })

@@ -65,7 +65,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         user = create_user_account(**serializer.validated_data)
         # Send email
-        send_verification_email(request, user)
+        send_verification_email(user)
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_201_CREATED)
 
@@ -182,7 +182,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         Send verification email again.
         """
         user = request.user
-        send_verification_email(request, user)
+        send_verification_email(user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
