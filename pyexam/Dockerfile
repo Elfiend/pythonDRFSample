@@ -11,6 +11,8 @@ RUN apt-get update \
 ARG DIRPATH=/app
 WORKDIR ${DIRPATH}
 
+ENV VIRTUAL_ENV /env
+ENV PATH /env/bin:$PATH
 COPY requirements.txt ${DIRPATH}
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
