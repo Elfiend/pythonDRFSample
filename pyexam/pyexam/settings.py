@@ -34,11 +34,15 @@ ALLOWED_HOSTS = [
     FRONTEND_URL,
 ]
 CSRF_TRUSTED_ORIGINS = [
+    f'http://{FRONTEND_URL}',
     f'http://{FRONTEND_URL}:{FRONTEND_PORT}',
+    f'https://{FRONTEND_URL}',
     f'https://{FRONTEND_URL}:{FRONTEND_PORT}',
 ]
 CORS_ALLOWED_ORIGINS = [
+    f'http://{FRONTEND_URL}',
     f'http://{FRONTEND_URL}:{FRONTEND_PORT}',
+    f'https://{FRONTEND_URL}',
     f'https://{FRONTEND_URL}:{FRONTEND_PORT}',
 ]
 CORS_ALLOW_CREDENTIALS = True
