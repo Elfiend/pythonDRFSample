@@ -77,7 +77,7 @@ class AuthUserSerializer(serializers.ModelSerializer):
     """
     A user serializer for auth the user.
     """
-    auth_token = serializers.SerializerMethodField()
+    token = serializers.SerializerMethodField()
     social_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -88,16 +88,16 @@ class AuthUserSerializer(serializers.ModelSerializer):
             'email_confirmed',
             'is_social_auth',
             'social_name',
-            'auth_token',
+            'token',
         )
         read_only_fields = (
             'id',
             'email',
             'is_social_auth',
-            'auth_token',
+            'token',
         )
 
-    def get_auth_token(self, obj):
+    def get_token(self, obj):
         token, _ = Token.objects.get_or_create(user=obj)
         return token.key
 
