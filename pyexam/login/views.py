@@ -1,13 +1,9 @@
-import json
 import logging
 import sys
-from urllib.parse import urlencode
 
-from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core.exceptions import ImproperlyConfigured
 
-import requests
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, permissions, status, viewsets
@@ -114,7 +110,11 @@ class AuthViewSet(viewsets.GenericViewSet):
         })
     @action(methods=[
         'POST',
-    ], detail=False)
+    ],
+            detail=False,
+            permission_classes=[
+                IsAuthenticated,
+            ])
     def logout(self, request):
         """
         Log out the user by both email and social account.
@@ -122,17 +122,6 @@ class AuthViewSet(viewsets.GenericViewSet):
         try:
             user = request.user
             logger.info(user)
-            # https://auth0.com/docs/quickstart/webapp/django
-            if user.is_social_auth is True:
-                domain = settings.SOCIAL_AUTH_AUTH0_DOMAIN
-                data = urlencode({
-                    'returnTo': request.build_absolute_uri('/'),
-                    'client_id': settings.SOCIAL_AUTH_AUTH0_KEY
-                })
-                logout_url = f'https://{domain}/v2/logout?{data}'
-                response = requests.get(logout_url)
-                json_response = json.loads(response.text)
-                logger.info(json_response)
         except AttributeError:
             # Log out error but need not tell client.
             # Just do log with error detail.
