@@ -1,4 +1,6 @@
 import json
+import logging
+import sys
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -24,6 +26,8 @@ from .utils import (activate_account, create_user_account,
                     get_active_session_amount, get_and_authenticate_user,
                     get_average_active_user_amount, get_signed_up_user_amount,
                     send_verification_email, update_active_day, update_name)
+
+logger = logging.getLogger(__name__)
 
 
 class AuthViewSet(viewsets.GenericViewSet):
@@ -126,10 +130,11 @@ class AuthViewSet(viewsets.GenericViewSet):
                 logout_url = f'https://{domain}/v2/logout?{data}'
                 response = requests.get(logout_url)
                 json_response = json.loads(response.text)
-                print(json_response)
+                logger.info(json_response)
         except AttributeError:
             # Log out error but need not tell client.
             # Just do log with error detail.
+            logger.error('%s', ' '.join(sys.argv), exc_info=sys.exc_info())
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         logout(request)
