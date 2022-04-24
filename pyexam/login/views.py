@@ -102,6 +102,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         user.login_count += 1
         user.save()
         update_active_day(user)
+        logger.info(user)
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_200_OK)
 
@@ -120,6 +121,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         """
         try:
             user = request.user
+            logger.info(user)
             # https://auth0.com/docs/quickstart/webapp/django
             if user.is_social_auth is True:
                 domain = settings.SOCIAL_AUTH_AUTH0_DOMAIN
