@@ -21,10 +21,11 @@ from django.urls import include, path
 from rest_framework import routers
 from rest_framework.urlpatterns import format_suffix_patterns
 
-from .views import AuthViewSet, UserList
+from .views import AuthViewSet, UserDataViewSet, UserList
 
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'api/auth', AuthViewSet, basename='auth')
+router.register(r'api/user', UserDataViewSet, basename='user')
 
 urlpatterns = [
     path('api/users/', UserList.as_view(), name='user-list'),

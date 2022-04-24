@@ -21,8 +21,9 @@ from .serializers import (AuthUserSerializer, EmptySerializer,
                           UserListSerializer, UserLoginSerializer,
                           UserSignupSerializer)
 from .utils import (activate_account, create_user_account,
-                    get_and_authenticate_user, send_verification_email,
-                    update_name)
+                    get_active_session_amount, get_and_authenticate_user,
+                    get_average_active_user_amount, get_signed_up_user_amount,
+                    send_verification_email, update_active_day, update_name)
 
 
 class AuthViewSet(viewsets.GenericViewSet):
@@ -66,6 +67,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         user = create_user_account(**serializer.validated_data)
         # Send email
         send_verification_email(user)
+        update_active_day(user)
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_201_CREATED)
 
@@ -95,6 +97,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         user = get_and_authenticate_user(**serializer.validated_data)
         user.login_count += 1
         user.save()
+        update_active_day(user)
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_200_OK)
 
@@ -219,6 +222,7 @@ class AuthViewSet(viewsets.GenericViewSet):
             data = {'error': 'The confirmation link was invalid.'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         login(request, user)
+        update_active_day(user)
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_200_OK)
 
@@ -260,6 +264,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         if success is False:
             data = {'error': 'Update social name failed.'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+        update_active_day(request.user)
         data = AuthUserSerializer(request.user).data
         return Response(data=data, status=status.HTTP_200_OK)
 
@@ -285,3 +290,38 @@ class UserList(generics.ListAPIView):
     queryset = LocalUser.objects.all()
     serializer_class = UserListSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+
+class UserDataViewSet(viewsets.GenericViewSet):
+    """
+    A set of the view used for user data.
+    """
+    permission_classes = (AllowAny,)
+    serializer_class = EmptySerializer
+    queryset = LocalUser.objects.all()
+
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_200_OK:
+                openapi.Response(
+                    description='query successful and return users statistics.',
+                    examples={
+                        'application/json': {
+                            'sign_up_users': 10,
+                            'active_users': 5,
+                            'average_user': 3,
+                        }
+                    },
+                ),
+        })
+    @action(methods=[
+        'GET',
+    ], detail=False)
+    def get_statistics(self, request):
+        del request
+        data = {
+            'sign_up_users': get_signed_up_user_amount(),
+            'active_users': get_active_session_amount(),
+            'average_user': get_average_active_user_amount(),
+        }
+        return Response(data=data, status=status.HTTP_200_OK)

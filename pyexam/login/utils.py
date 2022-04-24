@@ -1,15 +1,19 @@
 """
 An authentication function set.
 """
+import datetime
+
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
+from django.db.models import Avg
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from rest_framework import serializers
 
-from .models import Profile
+from .models import ActiveCount, Profile
 from .tokens import account_activation_token
 
 
@@ -109,3 +113,57 @@ def activate_account(uidb64, token):
         return (True, user)
 
     return (False, None)
+
+
+def update_active_day(user):
+    """
+    Call by login.
+    Used to check or increase the counter for active user.
+    """
+    if not user:
+        return
+    profile = Profile.objects.get(user_id=user.id)
+    today = timezone.now().date()
+    if profile.last_active != today:
+        _increame_active_count(today)
+        profile.last_active = today
+        profile.save()
+
+
+def get_signed_up_user_amount():
+    """
+    For the user statistics.
+    Just return the number of signed up users.
+    """
+    return get_user_model().objects.all().count()
+
+
+def get_active_session_amount():
+    """
+    For the user statistics.
+    Just return the amount of today active user.
+    """
+    today = timezone.now().date()
+    record, _ = ActiveCount.objects.get_or_create(day=today)
+    return record.count
+
+
+def get_average_active_user_amount():
+    """
+    For the user statistics.
+    Return the average number of active session users
+    in the last 7 days rolling
+    """
+    today = timezone.now().date()
+    period = today - datetime.timedelta(days=7)
+
+    result = ActiveCount.objects.filter(day__gt=period).aggregate(Avg('count'))
+    return result['count__avg']
+
+
+def _increame_active_count(today):
+    # TODO: Maybe update_or_create is another solution.
+    record, _ = ActiveCount.objects.get_or_create(day=today)
+
+    record.count += 1
+    record.save()

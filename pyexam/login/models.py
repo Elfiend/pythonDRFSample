@@ -69,6 +69,7 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL,
                                 on_delete=models.CASCADE)
     social_name = models.CharField(_('Social name'), max_length=150, blank=True)
+    last_active = models.DateField(null=True)
 
 
 @receiver(post_save, sender=LocalUser)
@@ -78,3 +79,8 @@ def update_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
     instance.profile.save()
+
+
+class ActiveCount(models.Model):
+    day = models.DateField(primary_key=True)
+    count = models.IntegerField(default=0)
