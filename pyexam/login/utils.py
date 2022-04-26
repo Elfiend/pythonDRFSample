@@ -17,6 +17,15 @@ from .models import ActiveCount, Profile
 from .tokens import account_activation_token
 
 
+def increase_login_count(user):
+    """
+    Another way to increase:
+    objests.update and F() expressions.
+    """
+    user.login_count += 1
+    user.save()
+
+
 def update_social_name(backend, user, response, *args, **kwargs):
     """
     Used to set social name after social account login.
@@ -33,6 +42,8 @@ def update_social_name(backend, user, response, *args, **kwargs):
     if not profile.social_name:
         profile.social_name = kwargs.get('details').get('fullname')
         profile.save()
+    increase_login_count(user)
+    update_active_day(user)
 
 
 def update_name(user, social_name):
@@ -42,8 +53,6 @@ def update_name(user, social_name):
         user_id=user.id,
         defaults={'social_name': social_name},
     )
-    # profile.social_name = social_name
-    # profile.save()
     return user
 
 

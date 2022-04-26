@@ -21,7 +21,8 @@ from .serializers import (AuthUserSerializer, EmptySerializer,
 from .utils import (activate_account, create_user_account,
                     get_active_session_amount, get_and_authenticate_user,
                     get_average_active_user_amount, get_signed_up_user_amount,
-                    send_verification_email, update_active_day, update_name)
+                    increase_login_count, send_verification_email,
+                    update_active_day, update_name)
 
 logger = logging.getLogger(__name__)
 
@@ -95,8 +96,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = get_and_authenticate_user(**serializer.validated_data)
-        user.login_count += 1
-        user.save()
+        increase_login_count(user)
         update_active_day(user)
         logger.info(user)
         data = AuthUserSerializer(user).data
