@@ -5,7 +5,7 @@ import datetime
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
-from django.db.models import Avg
+from django.db.models import Avg, F
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
@@ -171,8 +171,6 @@ def get_average_active_user_amount():
 
 
 def _increame_active_count(today):
-    # TODO: Maybe update_or_create is another solution.
     record, _ = ActiveCount.objects.get_or_create(day=today)
-
-    record.count += 1
+    record.count = F('count') + 1
     record.save()
