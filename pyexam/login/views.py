@@ -145,13 +145,16 @@ class AuthViewSet(viewsets.GenericViewSet):
                     examples=ResetPasswordSerializer.
                     to_string_response_examples())
         })
-    @action(methods=[
-        'POST',
-    ],
-            detail=False,
-            permission_classes=[
-                IsAuthenticated,
-            ])
+    @action(
+        methods=[
+            'POST',
+        ],
+        detail=False,
+        permission_classes=[
+            IsAuthenticated,
+            IsEmailConfirmed,
+        ],
+    )
     def reset_password(self, request):
         """
         Reset password with new password directly.
@@ -242,13 +245,16 @@ class AuthViewSet(viewsets.GenericViewSet):
                     },
                 ),
         })
-    @action(methods=[
-        'POST',
-    ],
-            detail=False,
-            permission_classes=[
-                IsAuthenticated,
-            ])
+    @action(
+        methods=[
+            'POST',
+        ],
+        detail=False,
+        permission_classes=[
+            IsAuthenticated,
+            IsEmailConfirmed,
+        ],
+    )
     def update_profile(self, request):
         """
         Update the name.
