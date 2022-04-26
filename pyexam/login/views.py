@@ -6,7 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, permissions, status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -282,18 +282,12 @@ class AuthViewSet(viewsets.GenericViewSet):
         })
 
 
-class UserList(generics.ListAPIView):
-    queryset = LocalUser.objects.all()
-    serializer_class = UserListSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-
-
-class UserDataViewSet(viewsets.GenericViewSet):
+class UserDataViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """
     A set of the view used for user data.
     """
     permission_classes = (AllowAny,)
-    serializer_class = EmptySerializer
+    serializer_class = UserListSerializer
     queryset = LocalUser.objects.all()
 
     @swagger_auto_schema(
