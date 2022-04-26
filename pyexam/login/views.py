@@ -68,6 +68,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         user = create_user_account(**serializer.validated_data)
         # Send email
         send_verification_email(user)
+        increase_login_count(user)
         update_active_day(user)
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_201_CREATED)
@@ -218,6 +219,7 @@ class AuthViewSet(viewsets.GenericViewSet):
             data = {'error': 'The confirmation link was invalid.'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         login(request, user)
+        increase_login_count(user)
         update_active_day(user)
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_200_OK)
