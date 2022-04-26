@@ -5,7 +5,7 @@ import datetime
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
-from django.db.models import Avg, F
+from django.db.models import F, Sum
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
@@ -166,8 +166,13 @@ def get_average_active_user_amount():
     today = timezone.now().date()
     period = today - datetime.timedelta(days=7)
 
-    result = ActiveCount.objects.filter(day__gt=period).aggregate(Avg('count'))
-    return result['count__avg']
+    # Using Sum()/7 instead of Avg()
+    # Because there is no data if one day without user login.
+    # And then Avg() will divide by 6, not 7.
+    #####
+    # Another solution : Use cornroute to create default data.
+    result = ActiveCount.objects.filter(day__gt=period).aggregate(Sum('count'))
+    return result['count__sum'] / 7
 
 
 def _increame_active_count(today):
