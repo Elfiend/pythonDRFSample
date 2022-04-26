@@ -315,3 +315,30 @@ class UserDataViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             'average_user': get_average_active_user_amount(),
         }
         return Response(data=data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_200_OK:
+                openapi.Response(
+                    description='Get user data successful.',
+                    schema=AuthUserSerializer,
+                    examples=AuthUserSerializer.to_string_response_examples(),
+                ),
+        })
+    @action(
+        methods=[
+            'POST',
+        ],
+        detail=False,
+        serializer_class=EmptySerializer,
+        permission_classes=[
+            IsAuthenticated,
+        ],
+    )
+    def get_detail(self, request):
+        """
+        Get the user data with token.
+        """
+        user = request.user
+        data = AuthUserSerializer(user).data
+        return Response(data=data, status=status.HTTP_200_OK)
