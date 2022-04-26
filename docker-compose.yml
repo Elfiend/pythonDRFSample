@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  restserver:
+    image: exam-python:${CODE_VERSION}
+    container_name: pyexamRestfulAPI
+    build:
+      context: ./pyexam/
+      args:
+        - POSTGRES_HOST
+        - POSTGRES_NAME
+        - POSTGRES_USER
+        - POSTGRES_PASSWORD
+        - PORT
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:$PORT
+    env_file:
+      - .env
+    depends_on:
+      - psqldb
+    links:
+      - psqldb:psqldb
+
+  psqldb:
+    image: postgres
+    container_name: pyexamDB
+    volumes:
+      - ${DB_VOLUME_PATH}/postgres/data/db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    restart: always

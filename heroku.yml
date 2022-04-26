@@ -1,0 +1,13 @@
+setup:
+  addons:
+    - plan: heroku-postgresql:hobby-dev
+      as: DATABASE
+build:
+  docker:
+    web: pyexam/Dockerfile
+release:
+  command:
+    - python3 manage.py makemigrations && python3 manage.py migrate
+  image: web
+run:
+  web: python3 manage.py runserver 0.0.0.0:$PORT
