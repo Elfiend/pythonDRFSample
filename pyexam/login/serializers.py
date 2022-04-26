@@ -183,5 +183,5 @@ class UserListSerializer(serializers.ModelSerializer):
             'email',
             'date_joined',
             'login_count',
-            'last_login',
+            'last_modified',
         )

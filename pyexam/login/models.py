@@ -52,6 +52,7 @@ class LocalUser(AbstractUser):
     login_count = models.PositiveIntegerField(default=0)
     email_confirmed = models.BooleanField(default=True)
     is_social_auth = models.BooleanField(default=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
