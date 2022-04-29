@@ -34,12 +34,6 @@ class AuthViewSet(viewsets.GenericViewSet):
     permission_classes = (AllowAny,)
 
     serializer_class = EmptySerializer
-    serializer_classes = {
-        'signup': UserSignupSerializer,
-        'login': UserLoginSerializer,
-        'reset_password': ResetPasswordSerializer,
-        'update_profile': UpdateProfileSerializer,
-    }
     queryset = ''
 
     @swagger_auto_schema(
@@ -56,9 +50,13 @@ class AuthViewSet(viewsets.GenericViewSet):
                     examples=UserSignupSerializer.to_string_response_examples()
                 ),
         })
-    @action(methods=[
-        'POST',
-    ], detail=False)
+    @action(
+        methods=[
+            'POST',
+        ],
+        detail=False,
+        serializer_class=UserSignupSerializer,
+    )
     def signup(self, request):
         """
         Sign up with email and password.
@@ -87,9 +85,13 @@ class AuthViewSet(viewsets.GenericViewSet):
                     examples=UserLoginSerializer.to_string_response_examples(),
                 ),
         })
-    @action(methods=[
-        'POST',
-    ], detail=False)
+    @action(
+        methods=[
+            'POST',
+        ],
+        detail=False,
+        serializer_class=UserLoginSerializer,
+    )
     def login(self, request):
         """
         Log in with email and password.
@@ -109,13 +111,15 @@ class AuthViewSet(viewsets.GenericViewSet):
                 openapi.Response(description='Log out successful.',
                                  schema=EmptySerializer)
         })
-    @action(methods=[
-        'POST',
-    ],
-            detail=False,
-            permission_classes=[
-                IsAuthenticated,
-            ])
+    @action(
+        methods=[
+            'POST',
+        ],
+        detail=False,
+        permission_classes=[
+            IsAuthenticated,
+        ],
+    )
     def logout(self, request):
         """
         Log out the user by both email and social account.
@@ -150,6 +154,7 @@ class AuthViewSet(viewsets.GenericViewSet):
             'POST',
         ],
         detail=False,
+        serializer_class=ResetPasswordSerializer,
         permission_classes=[
             IsAuthenticated,
             IsEmailConfirmed,
@@ -173,13 +178,15 @@ class AuthViewSet(viewsets.GenericViewSet):
                     schema=EmptySerializer,
                 ),
         })
-    @action(methods=[
-        'POST',
-    ],
-            detail=False,
-            permission_classes=[
-                IsAuthenticated,
-            ])
+    @action(
+        methods=[
+            'POST',
+        ],
+        detail=False,
+        permission_classes=[
+            IsAuthenticated,
+        ],
+    )
     def resend_verification_email(self, request):
         """
         Send verification email again.
@@ -205,14 +212,16 @@ class AuthViewSet(viewsets.GenericViewSet):
                         }
                     })
         })
-    @action(methods=[
-        'GET',
-    ],
-            detail=False,
-            name='email-verification',
-            url_path='email_verification/'
-            r'(?P<uidb64>[-a-zA-Z0-9_]+)/'
-            r'(?P<token>[-a-zA-Z0-9_]+)/')
+    @action(
+        methods=[
+            'GET',
+        ],
+        detail=False,
+        name='email-verification',
+        url_path='email_verification/'
+        r'(?P<uidb64>[-a-zA-Z0-9_]+)/'
+        r'(?P<token>[-a-zA-Z0-9_]+)/',
+    )
     def email_verification(self, request, uidb64, token):
         """
         Verify the user from email link.
@@ -250,6 +259,7 @@ class AuthViewSet(viewsets.GenericViewSet):
             'POST',
         ],
         detail=False,
+        serializer_class=UpdateProfileSerializer,
         permission_classes=[
             IsAuthenticated,
             IsEmailConfirmed,
@@ -271,15 +281,6 @@ class AuthViewSet(viewsets.GenericViewSet):
         update_active_day(request.user)
         data = AuthUserSerializer(request.user).data
         return Response(data=data, status=status.HTTP_200_OK)
-
-    def get_serializer_class(self):
-        if not isinstance(self.serializer_classes, dict):
-            raise ImproperlyConfigured(
-                'serializer_classes should be a dict mapping.')
-
-        if self.action in self.serializer_classes:
-            return self.serializer_classes[self.action]
-        return super().get_serializer_class()
 
     def list(self, request):
         return Response({
@@ -312,9 +313,12 @@ class UserDataViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
                     },
                 ),
         })
-    @action(methods=[
-        'GET',
-    ], detail=False)
+    @action(
+        methods=[
+            'GET',
+        ],
+        detail=False,
+    )
     def get_statistics(self, request):
         del request
         data = {
