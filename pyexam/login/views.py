@@ -1,8 +1,10 @@
+"""
+Provides a ViewSets class that is the entry of the restful protocol.
+"""
 import logging
 import sys
 
 from django.contrib.auth import login, logout
-from django.core.exceptions import ImproperlyConfigured
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -283,6 +285,8 @@ class AuthViewSet(viewsets.GenericViewSet):
         return Response(data=data, status=status.HTTP_200_OK)
 
     def list(self, request):
+        """Return the list of function link.
+        """
         return Response({
             'signup': reverse('auth-signup', request=request),
             'login': reverse('auth-login', request=request),
@@ -320,6 +324,8 @@ class UserDataViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         detail=False,
     )
     def get_statistics(self, request):
+        """Get the statistics data.
+        """
         del request
         data = {
             'sign_up_users': get_signed_up_user_amount(),

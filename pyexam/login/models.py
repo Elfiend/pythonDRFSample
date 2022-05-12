@@ -1,3 +1,6 @@
+"""
+The models for database.
+"""
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
@@ -60,6 +63,9 @@ class LocalUser(AbstractUser):
     objects = LocalUserManager()
 
     class Meta:
+        """
+        Select data order by email.
+        """
         ordering = ['email']
 
     def __str__(self):
@@ -67,6 +73,13 @@ class LocalUser(AbstractUser):
 
 
 class Profile(models.Model):
+    """The user profile.
+
+    Attributes:
+        user_id: The id of user.
+        social_name: The social name.
+        last_active: The last day that active.
+    """
     user = models.OneToOneField(settings.AUTH_USER_MODEL,
                                 on_delete=models.CASCADE)
     social_name = models.CharField(_('Social name'), max_length=150, blank=True)
@@ -75,6 +88,14 @@ class Profile(models.Model):
 
 @receiver(post_save, sender=LocalUser)
 def update_profile(sender, instance, created, **kwargs):
+    """Auto updating the profile while save.
+
+    TODO: Check if need or not.
+
+    Args:
+        instance: The user object.
+        created: True if the user object created.
+    """
     del sender, kwargs
 
     if created:
@@ -83,5 +104,11 @@ def update_profile(sender, instance, created, **kwargs):
 
 
 class ActiveCount(models.Model):
+    """The users statistics data.
+
+    Attributes:
+        day: The day that count.
+        count: The amount of the active user.
+    """
     day = models.DateField(primary_key=True)
     count = models.IntegerField(default=0)

@@ -1,3 +1,6 @@
+"""
+Provides the custom permission policies.
+"""
 from rest_framework import permissions
 
 

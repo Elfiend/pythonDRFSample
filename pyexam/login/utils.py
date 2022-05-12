@@ -1,5 +1,4 @@
-"""
-An authentication function set.
+"""An authentication function set.
 """
 import datetime
 
@@ -18,21 +17,30 @@ from .tokens import account_activation_token
 
 
 def increase_login_count(user):
-    """
-    Another way to increase:
-    objests.update and F() expressions.
+    """Used to increase the login count.
+
+    Update data with consistent way.
+    TODO: To avoid race condition
+        Move the column to another model,
+        and increase count with update method.
+
+    Args:
+        user(:obj: get_user_model): The user object.
     """
     user.login_count += 1
     user.save()
 
 
 def update_social_name(backend, user, response, *args, **kwargs):
-    """
-    Used to set social name after social account login.
+    """Used to set social name after social account login.
+
+    After setting name,
+    increase the login count
+    and update the active day.
     Called from .settings.SOCIAL_AUTH_PIPELINE
 
     Args:
-        user(:obj: get_user_model) : The login user object.
+        user(:obj: get_user_model): The user object.
     """
     del backend, response, args
 
@@ -47,18 +55,35 @@ def update_social_name(backend, user, response, *args, **kwargs):
 
 
 def update_name(user, social_name):
+    """Used to update the social name.
+
+    Using update_or_create method to avoid race condition.
+
+    Args:
+        social_name: The name to update.
+
+    Returns:
+        True if update success.
+        False if cannot get the user id to update.
+    """
     if not user:
-        return None
+        return False
     Profile.objects.update_or_create(
         user_id=user.id,
         defaults={'social_name': social_name},
     )
-    return user
+    return True
 
 
 def create_user_account(email, password):
-    """
-    Used to create account with email.
+    """Used to create account with email.
+
+    Args:
+        email: The user email.
+        password: The user password.
+
+    Returns:
+        User object.
     """
     user = get_user_model().objects.create_user(email=email, password=password)
     user.backend = 'django.contrib.auth.backends.ModelBackend'
@@ -69,8 +94,17 @@ def create_user_account(email, password):
 
 
 def get_and_authenticate_user(email, password):
-    """
-    Used to authenticate the user.
+    """Used to authenticate the user.
+
+    Args:
+        email: The user email.
+        password: The user password.
+
+    Returns:
+        User object.
+
+    Raises:
+        ValidationError: If the email or password is not correct.
     """
     user = authenticate(username=email, password=password)
     if user is None:
@@ -80,8 +114,10 @@ def get_and_authenticate_user(email, password):
 
 
 def send_verification_email(user):
-    """
-    Used to send email with verification information.
+    """Used to send email with verification information.
+
+    Args:
+        user(:obj: get_user_model): The user object.
     """
     current_site = f'{settings.FRONTEND_URL}:{settings.FRONTEND_PORT}'
     subject = 'Activate Your Account'
@@ -96,8 +132,7 @@ def send_verification_email(user):
 
 
 def activate_account(uidb64, token):
-    """
-    Activate account from email.
+    """Activate account from email.
 
     Args:
         uidb64: The encoded value by user.pk
@@ -125,9 +160,12 @@ def activate_account(uidb64, token):
 
 
 def update_active_day(user):
-    """
+    """Used to check or increase the counter for active user.
+
     Call by login.
-    Used to check or increase the counter for active user.
+
+    Args:
+        user(:obj: get_user_model): The user object.
     """
     if not user:
         return
@@ -140,17 +178,23 @@ def update_active_day(user):
 
 
 def get_signed_up_user_amount():
-    """
-    For the user statistics.
-    Just return the number of signed up users.
+    """Just return the number of signed up users.
+
+    Used for the user statistics.
+
+    Returns:
+        the number of signed up users.
     """
     return get_user_model().objects.all().count()
 
 
 def get_active_session_amount():
-    """
-    For the user statistics.
-    Just return the amount of today active user.
+    """Just return the amount of today active user.
+
+    Used for the user statistics.
+
+    Returns:
+        the amount of today active user.
     """
     today = timezone.now().date()
     record, _ = ActiveCount.objects.get_or_create(day=today)
@@ -158,10 +202,12 @@ def get_active_session_amount():
 
 
 def get_average_active_user_amount():
-    """
-    For the user statistics.
-    Return the average number of active session users
-    in the last 7 days rolling
+    """Return the average number of active session users
+
+    Used for the user statistics.
+
+    Returns:
+        the average number of active session users.
     """
     today = timezone.now().date()
     period = today - datetime.timedelta(days=7)
@@ -176,6 +222,13 @@ def get_average_active_user_amount():
 
 
 def _increame_active_count(today):
+    """Increase the active count.
+
+    Using get_or_create and F() to avoid race condition.
+
+    Args:
+        today: The current date object.
+    """
     record, _ = ActiveCount.objects.get_or_create(day=today)
     record.count = F('count') + 1
     record.save()

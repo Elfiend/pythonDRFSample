@@ -1,3 +1,5 @@
+"""Serializers for restful protocol.
+"""
 from django.contrib.auth import password_validation
 
 from rest_framework import serializers
@@ -20,6 +22,9 @@ class UserSignupSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(required=True)
 
     class Meta:
+        """
+        Use the custom user model.
+        """
         model = LocalUser
         fields = ('email', 'password', 'password2')
 
@@ -81,6 +86,9 @@ class AuthUserSerializer(serializers.ModelSerializer):
     social_name = serializers.SerializerMethodField()
 
     class Meta:
+        """
+        Use the custom user model.
+        """
         model = LocalUser
         fields = (
             'id',
@@ -178,6 +186,9 @@ class UserListSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
+        """
+        Use the custom user model.
+        """
         model = LocalUser
         fields = (
             'email',
