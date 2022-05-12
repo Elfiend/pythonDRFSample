@@ -172,7 +172,7 @@ def update_active_day(user):
     profile = Profile.objects.get(user_id=user.id)
     today = timezone.now().date()
     if profile.last_active != today:
-        _increame_active_count(today)
+        _increase_active_count(today)
         profile.last_active = today
         profile.save()
 
@@ -221,7 +221,7 @@ def get_average_active_user_amount():
     return result['count__sum'] / 7
 
 
-def _increame_active_count(today):
+def _increase_active_count(today):
     """Increase the active count.
 
     Using get_or_create and F() to avoid race condition.
